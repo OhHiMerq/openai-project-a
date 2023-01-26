@@ -16,24 +16,32 @@ import { useState, useRef, useEffect } from "react";
 
 import { useInputState } from "@mantine/hooks";
 
+const MAX_TOKEN = 100;
+const modelMax = {
+  "text-davinci-003": 4000,
+  "text-curie-001": 2048,
+  "text-babbage-001": 2048,
+  "text-ada-001": 2048,
+};
+
 const ConvoMessage = ({ props }) => {
   return (
-    <Box
-      sx={(theme) => ({
-        backgroundColor: theme.colors.gray[0],
+    <div
+      style={{
+        backgroundColor: "#f8f9fa",
         padding: "5px 20px",
-        borderRadius: theme.radius.md,
-      })}
+        borderRadius: "5px",
+        whiteSpace: "normal",
+      }}
     >
-      {" "}
       <Stack spacing={5}>
-        <Text fw={700} color="gray.8">
+        <Text fw={700} color="gray.8" style={{ width: "80%" }}>
           {props.name}
         </Text>
 
         <Text color="gray.8">{props.mess}</Text>
-      </Stack>{" "}
-    </Box>
+      </Stack>
+    </div>
   );
 };
 
@@ -56,6 +64,10 @@ function App() {
   const [input, setInput] = useInputState("");
   const [convo, setConvo] = useState([]);
 
+  const inputToken = (100 * input.length) / 75;
+  const isAllowed =
+    modelMax[model] - usage["total_tokens"] >= inputToken + MAX_TOKEN;
+
   useEffect(() => {
     scrollToBottom();
   }, [convo]);
@@ -63,6 +75,7 @@ function App() {
   useEffect(() => {
     setPrompts("");
     setUsage({ prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 });
+    setConvo([]);
   }, [model]);
 
   const sendConvo = (name, mess) => {
@@ -71,6 +84,7 @@ function App() {
 
   const onSend = async () => {
     if (!input) return;
+    if (!isAllowed) return;
     sendConvo("me", input);
     setInput("");
     getResponse(input);
@@ -94,12 +108,7 @@ function App() {
         setResponding(false);
       });
   };
-  const modelMax = {
-    "text-davinci-003": 4000,
-    "text-curie-001": 2048,
-    "text-babbage-001": 2048,
-    "text-ada-001": 2048,
-  };
+
   return (
     <div style={{ margin: "50px 100px" }}>
       <Group position="apart" style={{ padding: "10px" }}>
@@ -148,9 +157,16 @@ function App() {
           size="xs"
           value={(usage["total_tokens"] / modelMax[model]) * 100}
         />
+        {!isAllowed ? (
+          <Text fw={500} color={"red"}>
+            Next Chat will Exceed Max Token
+          </Text>
+        ) : null}
+
         <Group position="center">
           <Text>{input.length}/200</Text>
           <LoadingOverlay visible={responding} overlayBlur={2} />
+
           <Textarea
             maxLength="200"
             onKeyDown={(e) => {
@@ -164,7 +180,9 @@ function App() {
             minRows={3}
             onChange={setInput}
           />
-          <Button onClick={onSend}>Send</Button>
+          <Button disabled={!isAllowed} onClick={onSend}>
+            Send
+          </Button>
         </Group>
       </Stack>
     </div>
