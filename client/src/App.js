@@ -111,6 +111,7 @@ function App() {
 
   return (
     <div style={{ margin: "50px 100px" }}>
+    <LoadingOverlay visible={responding} overlayBlur={2} />
       <Group position="apart" style={{ padding: "10px" }}>
         <Text fw={700} fz={22}>
           OpenAI API Test Project
@@ -129,7 +130,7 @@ function App() {
         />
       </Group>
       <Stack>
-        <ScrollArea style={{ height: 400 }} viewportRef={viewport}>
+        <ScrollArea style={{ height: 500}} viewportRef={viewport}>
           <Stack spacing={"md"} align={"stretch"}>
             {convo.length > 0 ? (
               convo.map((c, i) => <ConvoMessage key={i} props={c} />)
@@ -165,7 +166,7 @@ function App() {
 
         <Group position="center">
           <Text>{input.length}/200</Text>
-          <LoadingOverlay visible={responding} overlayBlur={2} />
+          
 
           <Textarea
             maxLength="200"
